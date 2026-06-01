@@ -3,7 +3,7 @@ import pickle
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
+
 from sklearn.metrics import confusion_matrix
 
 # ----------------------------
@@ -12,25 +12,22 @@ from sklearn.metrics import confusion_matrix
 st.set_page_config(page_title="Fraud Detection SaaS", layout="wide")
 
 st.title("🚨 Fraud Detection System (SaaS Dashboard)")
-st.write("Real-time AI-powered fraud detection using Machine Learning")
+st.write("Real-time AI-powered fraud detection using Random Forest")
 
 # ----------------------------
-# SIDEBAR (SAAS INFO PANEL)
+# SIDEBAR (SYSTEM INFO)
 # ----------------------------
 st.sidebar.title("📊 System Info")
 
 st.sidebar.markdown("""
 **Machine Learning Model**  
-Fraud Detection System  
-
-**Model Type**  
 Random Forest Classifier  
 
-**Explainable AI**  
-Enabled (Feature Importance)  
+**Task**  
+Fraud Detection  
 
-**Dataset**  
-Credit Card Transactions  
+**Explainable AI**  
+Feature Importance Enabled  
 """)
 
 # ----------------------------
@@ -40,7 +37,7 @@ with open("models/model.pkl", "rb") as f:
     model = pickle.load(f)
 
 # ----------------------------
-# LOAD DATA FOR METRICS
+# LOAD DATA (FOR METRICS)
 # ----------------------------
 df = pd.read_csv("data/creditcard.csv")
 
@@ -80,18 +77,27 @@ if st.button("Predict Fraud"):
         st.success("✅ Legit Transaction")
 
 # ----------------------------
-# MODEL EXPLAINABILITY
+# FEATURE IMPORTANCE (FIXED)
 # ----------------------------
 st.markdown("---")
 st.subheader("📊 Model Explainability (Feature Importance)")
 
 importances = model.feature_importances_
-feature_names = X.columns
+feature_names = np.array(X.columns)
 
-fig1, ax1 = plt.subplots(figsize=(10, 5))
-ax1.barh(feature_names[:15], importances[:15])
-ax1.set_title("Top Feature Importance")
-st.pyplot(fig1)
+# safe sorting
+idx = np.argsort(importances)[::-1][:15]
+
+top_features = feature_names[idx]
+top_importances = importances[idx]
+
+fig, ax = plt.subplots(figsize=(10, 5))
+
+ax.barh(top_features, top_importances)
+ax.invert_yaxis()
+ax.set_title("Top Feature Importance")
+
+st.pyplot(fig)
 
 # ----------------------------
 # CONFUSION MATRIX
@@ -102,11 +108,15 @@ y_pred = model.predict(X)
 cm = confusion_matrix(y, y_pred)
 
 fig2, ax2 = plt.subplots()
-sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", ax=ax2)
 
+ax2.imshow(cm, cmap="Blues")
+ax2.set_title("Confusion Matrix")
 ax2.set_xlabel("Predicted")
 ax2.set_ylabel("Actual")
-ax2.set_title("Confusion Matrix")
+
+for i in range(2):
+    for j in range(2):
+        ax2.text(j, i, cm[i, j], ha="center", va="center")
 
 st.pyplot(fig2)
 
@@ -114,4 +124,4 @@ st.pyplot(fig2)
 # FOOTER
 # ----------------------------
 st.markdown("---")
-st.caption("Fraud Detection SaaS | Powered by Random Forest + Streamlit")
+st.caption("Fraud Detection SaaS | Streamlit + RandomForest")
