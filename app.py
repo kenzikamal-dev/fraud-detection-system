@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix
 
 # ----------------------------
@@ -15,7 +16,7 @@ st.title("🚨 Fraud Detection System (SaaS Dashboard)")
 st.write("Real-time AI-powered fraud detection using Random Forest")
 
 # ----------------------------
-# SIDEBAR (SYSTEM INFO)
+# SIDEBAR INFO
 # ----------------------------
 st.sidebar.title("📊 System Info")
 
@@ -37,7 +38,7 @@ with open("models/model.pkl", "rb") as f:
     model = pickle.load(f)
 
 # ----------------------------
-# LOAD DATA (FOR METRICS)
+# LOAD DATA
 # ----------------------------
 df = pd.read_csv("data/creditcard.csv")
 
@@ -85,27 +86,35 @@ st.subheader("📊 Model Explainability (Feature Importance)")
 importances = model.feature_importances_
 feature_names = np.array(X.columns)
 
-# safe sorting
 idx = np.argsort(importances)[::-1][:15]
 
 top_features = feature_names[idx]
 top_importances = importances[idx]
 
-fig, ax = plt.subplots(figsize=(10, 5))
+fig1, ax1 = plt.subplots(figsize=(10, 5))
+ax1.barh(top_features, top_importances)
+ax1.invert_yaxis()
+ax1.set_title("Top Feature Importance")
 
-ax.barh(top_features, top_importances)
-ax.invert_yaxis()
-ax.set_title("Top Feature Importance")
-
-st.pyplot(fig)
+st.pyplot(fig1)
 
 # ----------------------------
-# CONFUSION MATRIX
+# CONFUSION MATRIX (FIXED SAFE VERSION)
 # ----------------------------
+st.markdown("---")
 st.subheader("📊 Model Performance (Confusion Matrix)")
 
-y_pred = model.predict(X)
-cm = confusion_matrix(y, y_pred)
+# SAFE TRAIN-TEST SPLIT
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+y_pred = model.predict(X_test)
+
+cm = confusion_matrix(y_test, y_pred)
 
 fig2, ax2 = plt.subplots()
 
@@ -124,4 +133,4 @@ st.pyplot(fig2)
 # FOOTER
 # ----------------------------
 st.markdown("---")
-st.caption("Fraud Detection SaaS | Streamlit + RandomForest")
+st.caption("Fraud Detection SaaS | Streamlit + Random Forest")
